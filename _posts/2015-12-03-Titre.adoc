@@ -2,9 +2,39 @@
 
 Contenu test
 
-:sourcedir: src/main/java
-
 [source,java]
 ----
-include::{sourcedir}/org/asciidoctor/Asciidoctor.java[]
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.web.WebAppConfiguration;
+import org.springframework.test.web.servlet.ResultActions;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+/**
+ *
+ * @author sfoubert
+ */
+@RunWith(SpringJUnit4ClassRunner.class)
+@ContextConfiguration(classes = {TestApplicationContext.class})
+@WebAppConfiguration
+public class M2MControllerTest extends EdsnControllerTest {
+
+    @Test
+    public void testDownloadResponse() throws Exception {
+        ResultActions result = mockMvc.perform(get(
+                "/m2m/downloadResponse?declarationId=").
+                session(session)).andDo(print());
+        result.andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON));
+
+    }
+}
+
+
 ----
