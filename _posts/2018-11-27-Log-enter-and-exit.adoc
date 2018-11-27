@@ -5,7 +5,7 @@ Creation annotation
 :source-highlighter: highlightjs
 [source,java]
 ----
-package com.sgdbf.starter.aop.autoconfigure;
+package fr.ippon.starter.aop.autoconfigure;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -14,6 +14,151 @@ import java.lang.annotation.Target;
 
 @Target({ElementType.TYPE, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
-public @interface SgdbfLogging {
+public @interface IpponLogging {
+}
+----
+
+
+
+Configuration de l'aspect
+
+:source-highlighter: highlightjs
+[source,java]
+----
+package fr.ippon.starter.aop.autoconfigure;
+
+import java.util.Arrays;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import org.aopalliance.intercept.MethodInterceptor;
+import org.aopalliance.intercept.MethodInvocation;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.aop.aspectj.AspectJExpressionPointcutAdvisor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.util.StringUtils;
+
+@Configuration
+@ConditionalOnProperty(
+    prefix = "ippon.aop.logging",
+    name = {"enabled"},
+    havingValue = "true"
+)
+@EnableConfigurationProperties({LoggingAspectProperties.class})
+public class LoggingAspectAutoConfiguration {
+    private static final Logger LOGGER = LoggerFactory.getLogger(LoggingAspectAutoConfiguration.class);
+    @Autowired
+    private LoggingAspectProperties loggingAspectProperties;
+
+    public LoggingAspectAutoConfiguration() {
+    }
+
+    @Bean
+    public AspectJExpressionPointcutAdvisor loggingdvisor() {
+        String exprJoinedPackages = "";
+        if (this.loggingAspectProperties.getBasePackages() != null) {
+            exprJoinedPackages = (String)this.loggingAspectProperties.getBasePackages().stream().map((basePackage) -> {
+                return "within(" + basePackage + "..*)";
+            }).collect(Collectors.joining(" || "));
+        }
+
+        String exprAnnotation = "@annotation(" + IpponLogging.class.getCanonicalName() + ")";
+        String expression = exprJoinedPackages + (StringUtils.isEmpty(exprJoinedPackages) ? "" : " || ") + exprAnnotation;
+        LOGGER.debug("IPPON aop logging is enabled with pointcut expression : {}", expression);
+        AspectJExpressionPointcutAdvisor pointcutAdvisor = new AspectJExpressionPointcutAdvisor();
+        pointcutAdvisor.setExpression(expression);
+        pointcutAdvisor.setAdvice(new LoggingAspectAutoConfiguration.LoggingMethodInterceptor());
+        return pointcutAdvisor;
+    }
+
+    private class LoggingMethodInterceptor implements MethodInterceptor {
+        private final Logger log;
+
+        private LoggingMethodInterceptor() {
+            LoggingAspectAutoConfiguration var10001 = LoggingAspectAutoConfiguration.this;
+            this.log = LoggingAspectAutoConfiguration.LOGGER;
+        }
+
+        public Object invoke(MethodInvocation invocation) throws Throwable {
+            if (this.log.isDebugEnabled()) {
+                this.log.debug("Enter: {}.{}() with argument[s] = {}", new Object[]{invocation.getMethod().getDeclaringClass().getName(), invocation.getMethod().getName(), Arrays.toString(invocation.getArguments())});
+            }
+
+            try {
+                Object result = invocation.proceed();
+                if (this.log.isDebugEnabled()) {
+                    this.log.debug("Exit: {}.{}() with result = {}", new Object[]{invocation.getMethod().getDeclaringClass().getName(), invocation.getMethod().getName(), result});
+                }
+
+                return result;
+            } catch (IllegalArgumentException var3) {
+                this.log.error("Illegal argument: {} in {}.{}()", new Object[]{Arrays.toString(invocation.getArguments()), invocation.getMethod().getDeclaringClass().getName(), invocation.getMethod().getName()});
+                throw var3;
+            } catch (Exception var4) {
+                this.handleException(invocation, var4);
+                throw var4;
+            }
+        }
+
+        private void handleException(MethodInvocation invocation, Exception e) {
+            if (LoggingAspectAutoConfiguration.this.loggingAspectProperties.isFullStack()) {
+                this.log.error("Exception in {}.{}() with cause = '{}' and exception = '{}'", new Object[]{invocation.getMethod().getDeclaringClass().getName(), invocation.getMethod().getName(), e.getCause() != null ? e.getCause() : "NULL", e.getMessage(), e});
+            } else {
+                this.log.error("Exception in {}.{}() with cause = {}", new Object[]{invocation.getMethod().getDeclaringClass().getName(), invocation.getMethod().getName(), e.getCause() != null ? e.getCause() : "NULL"});
+            }
+
+        }
+    }
+}
+----
+
+Lecture du fichier properties
+
+:source-highlighter: highlightjs
+[source,java]
+----
+package fr.ippon.starter.aop.autoconfigure;
+
+import java.util.List;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+
+@ConfigurationProperties("ippon.aop.logging")
+public class LoggingAspectProperties {
+    static final String SPRING_AOP_LOGGING_PREFIX = "sgdbf.aop.logging";
+    static final String ENABLED_PROPERTY = "enabled";
+    private boolean enabled = false;
+    private List<String> basePackages;
+    private boolean fullStack = true;
+
+    public LoggingAspectProperties() {
+    }
+
+    public List<String> getBasePackages() {
+        return this.basePackages;
+    }
+
+    public void setBasePackages(List<String> basePackages) {
+        this.basePackages = basePackages;
+    }
+
+    public boolean isFullStack() {
+        return this.fullStack;
+    }
+
+    public void setFullStack(boolean fullStack) {
+        this.fullStack = fullStack;
+    }
+
+    public boolean isEnabled() {
+        return this.enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
 }
 ----
