@@ -199,7 +199,7 @@ public class LoggingAspectProperties {
 
 ----
 
-Ajouter au pom.xml
+Ajouter au pom.xml la dépendance suivante, afin de pouvoir utiliser @ConfigurationProperties
 
 :source-highlighter: highlightjs
 [source,xml]
