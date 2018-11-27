@@ -198,3 +198,15 @@ public class LoggingAspectProperties {
 }
 
 ----
+
+Ajouter au pom.xml
+
+:source-highlighter: highlightjs
+[source,xml]
+----
+<dependency>
+	<groupId>org.springframework.boot</groupId>
+	<artifactId>spring-boot-configuration-processor</artifactId>
+	<optional>true</optional>
+</dependency>
+----
