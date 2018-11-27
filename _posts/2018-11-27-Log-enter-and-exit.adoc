@@ -1,6 +1,6 @@
 = Log enter and exit
 
-Creation annotation
+Creation d'une annotation @IpponLogging
 
 :source-highlighter: highlightjs
 [source,java]
@@ -20,7 +20,7 @@ public @interface IpponLogging {
 
 
 
-Configuration de l'aspect
+Configuration de l'aspect qui logge les entrées-sorties des méthodes de la classe possédant l'annotation
 
 :source-highlighter: highlightjs
 [source,java]
@@ -129,29 +129,50 @@ public class LoggingAspectAutoConfiguration {
 }
 ----
 
-Lecture du fichier properties
+Lecture du fichier properties de la configuration de l'aspect
 
 :source-highlighter: highlightjs
 [source,java]
 ----
 package fr.ippon.starter.aop.autoconfigure;
 
-import java.util.List;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-@ConfigurationProperties("ippon.aop.logging")
+import java.util.List;
+
+/**
+ * The type Logging aspect properties.
+ */
+@ConfigurationProperties(LoggingAspectProperties.SPRING_AOP_LOGGING_PREFIX)
 public class LoggingAspectProperties {
-    static final String SPRING_AOP_LOGGING_PREFIX = "sgdbf.aop.logging";
+
+    /**
+     * The constant SPRING_AOP_LOGGING_PREFIX.
+     */
+    static final String SPRING_AOP_LOGGING_PREFIX = "ippon.aop.logging";
+
+    /**
+     * The constant ENABLED_PROPERTY.
+     */
     static final String ENABLED_PROPERTY = "enabled";
+
+    /**
+     * Defines whether the IPPON logging is enabled or not (default: disabled).
+     */
     private boolean enabled = false;
+
+    /**
+     * Defines the list of packages to enabled IPPON logging.
+     */
     private List<String> basePackages;
+
+    /**
+     * Defines whether the full stack traces are included in log messages (default: enabled).
+     */
     private boolean fullStack = true;
 
-    public LoggingAspectProperties() {
-    }
-
     public List<String> getBasePackages() {
-        return this.basePackages;
+        return basePackages;
     }
 
     public void setBasePackages(List<String> basePackages) {
@@ -159,7 +180,7 @@ public class LoggingAspectProperties {
     }
 
     public boolean isFullStack() {
-        return this.fullStack;
+        return fullStack;
     }
 
     public void setFullStack(boolean fullStack) {
@@ -167,11 +188,13 @@ public class LoggingAspectProperties {
     }
 
     public boolean isEnabled() {
-        return this.enabled;
+        return enabled;
     }
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
     }
+
 }
+
 ----
