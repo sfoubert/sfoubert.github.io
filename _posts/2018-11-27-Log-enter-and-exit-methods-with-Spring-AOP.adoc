@@ -210,3 +210,11 @@ Ajouter au pom.xml la dépendance suivante, afin de pouvoir utiliser @Configurat
 	<optional>true</optional>
 </dependency>
 ----
+
+Ajouter un fichier src/main/resources/META-INF/spring.factories contenant la déclaration de l'autoconfiguration
+
+:source-highlighter: highlightjs
+[source,xml]
+----
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=com.sgdbf.starter.aop.autoconfigure.LoggingAspectAutoConfiguration
+----
