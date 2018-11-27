@@ -1,4 +1,4 @@
-= Log enter and exit
+= Log enter and exit methods with Spring AOP
 
 Creation d'une annotation @IpponLogging
 
