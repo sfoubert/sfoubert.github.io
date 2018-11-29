@@ -1,7 +1,7 @@
 = Log enter and exit methods with Spring AOP
 
 Creation d'une annotation @IpponLogging
-
+:hp-tags: SpringBoot, Java
 :source-highlighter: highlightjs
 [source,java]
 ----
