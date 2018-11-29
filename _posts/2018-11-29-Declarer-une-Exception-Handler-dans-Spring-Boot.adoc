@@ -1,2 +1,32 @@
 = Déclarer une ExceptionHandler dans SpringBoot
 :hp-tags: SpringBoot, Java
+
+Voici comment déclarer des ExceptionHandlers pour transformer ses exceptions en réponse HTTP 
+
+:source-highlighter: highlightjs
+[source,java]
+----
+package fr.ippon.service.supply.purchaseorder.web.rest.exception;
+
+import fr.ippon.service.supply.common.exception.CreateBadRequestException;
+import fr.ippon.service.supply.common.exception.CreateConflictException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+@RestControllerAdvice
+public class PurchaseOrderExceptionHandler {
+
+    @ExceptionHandler(CreateBadRequestException.class)
+    public ResponseEntity<String> handleCreateBadRequestException(CreateBadRequestException exception) {
+        return new ResponseEntity<>(exception.getMessage(),HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(CreateConflictException.class)
+    public ResponseEntity<String> handleCreateConflictException(CreateConflictException exception) {
+        return new ResponseEntity<>(exception.getMessage(), HttpStatus.CONFLICT);
+    }
+
+}
+----
