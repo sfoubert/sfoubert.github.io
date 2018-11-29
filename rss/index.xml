@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="UTF-8"?><rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom" version="2.0"><channel><title><![CDATA[Blog]]></title><description><![CDATA[Blog]]></description><link>https://sfoubert.github.io</link><generator>RSS for Node</generator><lastBuildDate>Thu, 29 Nov 2018 13:22:13 GMT</lastBuildDate><atom:link href="https://sfoubert.github.io/rss/" rel="self" type="application/rss+xml"/><ttl>60</ttl><item><title><![CDATA[Déclarer une ExceptionHandler dans SpringBoot]]></title><description><![CDATA[<div class="paragraph">
+<p>Voici comment déclarer des ExceptionHandlers pour transformer ses exceptions en réponse HTTP</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">package fr.ippon.service.supply.purchaseorder.web.rest.exception;
+
+import fr.ippon.service.supply.common.exception.CreateBadRequestException;
+import fr.ippon.service.supply.common.exception.CreateConflictException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+@RestControllerAdvice
+public class PurchaseOrderExceptionHandler {
+
+    @ExceptionHandler(CreateBadRequestException.class)
+    public ResponseEntity&lt;String&gt; handleCreateBadRequestException(CreateBadRequestException exception) {
+        return new ResponseEntity&lt;&gt;(exception.getMessage(),HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(CreateConflictException.class)
+    public ResponseEntity&lt;String&gt; handleCreateConflictException(CreateConflictException exception) {
+        return new ResponseEntity&lt;&gt;(exception.getMessage(), HttpStatus.CONFLICT);
+    }
+
+}</code></pre>
+</div>
+</div>]]></description><link>https://sfoubert.github.io/2018/11/29/Declarer-une-Exception-Handler-dans-Spring-Boot.html</link><guid isPermaLink="true">https://sfoubert.github.io/2018/11/29/Declarer-une-Exception-Handler-dans-Spring-Boot.html</guid><category><![CDATA[SpringBoot]]></category><category><![CDATA[Java]]></category><dc:creator><![CDATA[Sébastien F]]></dc:creator><pubDate>Thu, 29 Nov 2018 00:00:00 GMT</pubDate></item><item><title><![CDATA[Log enter and exit methods with Spring AOP]]></title><description><![CDATA[<div class="paragraph">
+<p>Creation d&#8217;une annotation @IpponLogging</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">package fr.ippon.starter.aop.autoconfigure;
+
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+@Target({ElementType.TYPE, ElementType.METHOD})
+@Retention(RetentionPolicy.RUNTIME)
+public @interface IpponLogging {
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Configuration de l&#8217;aspect qui logge les entrées-sorties des méthodes de la classe possédant l&#8217;annotation</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">package fr.ippon.starter.aop.autoconfigure;
+
+import org.aopalliance.intercept.MethodInterceptor;
+import org.aopalliance.intercept.MethodInvocation;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.aop.aspectj.AspectJExpressionPointcutAdvisor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.util.StringUtils;
+
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
+/**
+ * The type Logging aspect auto configuration.
+ */
+@Configuration
+@ConditionalOnProperty(prefix = LoggingAspectProperties.SPRING_AOP_LOGGING_PREFIX,
+        name = LoggingAspectProperties.ENABLED_PROPERTY, havingValue = "true")
+@EnableConfigurationProperties(LoggingAspectProperties.class)
+public class LoggingAspectAutoConfiguration {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(LoggingAspectAutoConfiguration.class);
+
+    @Autowired
+    private LoggingAspectProperties loggingAspectProperties;
+
+    /**
+     * Loggingdvisor aspect j expression pointcut advisor.
+     *
+     * @return the aspect j expression pointcut advisor
+     */
+    @Bean
+    public AspectJExpressionPointcutAdvisor loggingdvisor() {
+
+        String exprJoinedPackages = "";
+        if (loggingAspectProperties.getBasePackages() != null) {
+            exprJoinedPackages = loggingAspectProperties.getBasePackages().stream()
+                    .map(basePackage -&gt; "within(" + basePackage + "..*)")
+                    .collect(Collectors.joining(" || "));
+        }
+
+        String exprAnnotation = "@annotation(" + IpponLogging.class.getCanonicalName() + ")";
+
+        String expression = exprJoinedPackages +
+                (StringUtils.isEmpty(exprJoinedPackages) ? "" : " || ") + exprAnnotation;
+
+        LOGGER.debug("IPPON aop logging is enabled with pointcut expression : {}", expression);
+
+        AspectJExpressionPointcutAdvisor pointcutAdvisor = new AspectJExpressionPointcutAdvisor();
+        pointcutAdvisor.setExpression(expression);
+        pointcutAdvisor.setAdvice(new LoggingMethodInterceptor());
+        return pointcutAdvisor;
+
+    }
+
+    private class LoggingMethodInterceptor implements MethodInterceptor {
+
+        private final Logger log = LoggingAspectAutoConfiguration.this.LOGGER;
+
+        @Override
+        public Object invoke(MethodInvocation invocation) throws Throwable {
+            if (log.isDebugEnabled()) {
+                log.debug("Enter: {}.{}() with argument[s] = {}", invocation.getMethod().getDeclaringClass().getName(),
+                        invocation.getMethod().getName(), Arrays.toString(invocation.getArguments()));
+            }
+            try {
+                Object result = invocation.proceed();
+                if (log.isDebugEnabled()) {
+                    log.debug("Exit: {}.{}() with result = {}", invocation.getMethod().getDeclaringClass().getName(),
+                            invocation.getMethod().getName(), result);
+                }
+                return result;
+            } catch (IllegalArgumentException e) {
+                log.error("Illegal argument: {} in {}.{}()", Arrays.toString(invocation.getArguments()),
+                        invocation.getMethod().getDeclaringClass().getName(), invocation.getMethod().getName());
+                throw e;
+            } catch (Exception ex) {
+                handleException(invocation, ex);
+                throw ex;
+            }
+        }
+
+        private void handleException(MethodInvocation invocation, Exception e) {
+            if (loggingAspectProperties.isFullStack()) {
+                log.error("Exception in {}.{}() with cause = \'{}\' and exception = \'{}\'",
+                        invocation.getMethod().getDeclaringClass().getName(),
+                        invocation.getMethod().getName(), e.getCause() != null ? e.getCause() : "NULL", e.getMessage(),
+                        e);
+            } else {
+                log.error("Exception in {}.{}() with cause = {}", invocation.getMethod().getDeclaringClass().getName(),
+                        invocation.getMethod().getName(), e.getCause() != null ? e.getCause() : "NULL");
+            }
+        }
+
+    }
+
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Lecture du fichier properties de la configuration de l&#8217;aspect</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">package fr.ippon.starter.aop.autoconfigure;
+
+import org.springframework.boot.context.properties.ConfigurationProperties;
+
+import java.util.List;
+
+/**
+ * The type Logging aspect properties.
+ */
+@ConfigurationProperties(LoggingAspectProperties.SPRING_AOP_LOGGING_PREFIX)
+public class LoggingAspectProperties {
+
+    /**
+     * The constant SPRING_AOP_LOGGING_PREFIX.
+     */
+    static final String SPRING_AOP_LOGGING_PREFIX = "ippon.aop.logging";
+
+    /**
+     * The constant ENABLED_PROPERTY.
+     */
+    static final String ENABLED_PROPERTY = "enabled";
+
+    /**
+     * Defines whether the IPPON logging is enabled or not (default: disabled).
+     */
+    private boolean enabled = false;
+
+    /**
+     * Defines the list of packages to enabled IPPON logging.
+     */
+    private List&lt;String&gt; basePackages;
+
+    /**
+     * Defines whether the full stack traces are included in log messages (default: enabled).
+     */
+    private boolean fullStack = true;
+
+    public List&lt;String&gt; getBasePackages() {
+        return basePackages;
+    }
+
+    public void setBasePackages(List&lt;String&gt; basePackages) {
+        this.basePackages = basePackages;
+    }
+
+    public boolean isFullStack() {
+        return fullStack;
+    }
+
+    public void setFullStack(boolean fullStack) {
+        this.fullStack = fullStack;
+    }
+
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
+
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Ajouter au pom.xml la dépendance suivante, afin de pouvoir utiliser @ConfigurationProperties</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;dependency&gt;
+	&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+	&lt;artifactId&gt;spring-boot-configuration-processor&lt;/artifactId&gt;
+	&lt;optional&gt;true&lt;/optional&gt;
+&lt;/dependency&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Ajouter un fichier src/main/resources/META-INF/spring.factories contenant la déclaration de l&#8217;autoconfiguration</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">org.springframework.boot.autoconfigure.EnableAutoConfiguration=com.sgdbf.starter.aop.autoconfigure.LoggingAspectAutoConfiguration</code></pre>
+</div>
+</div>]]></description><link>https://sfoubert.github.io/2018/11/27/Log-enter-and-exit-methods-with-Spring-AOP.html</link><guid isPermaLink="true">https://sfoubert.github.io/2018/11/27/Log-enter-and-exit-methods-with-Spring-AOP.html</guid><dc:creator><![CDATA[Sébastien F]]></dc:creator><pubDate>Tue, 27 Nov 2018 00:00:00 GMT</pubDate></item></channel></rss>
