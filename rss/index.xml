@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?><rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom" version="2.0"><channel><title><![CDATA[Blog]]></title><description><![CDATA[Blog]]></description><link>https://sfoubert.github.io</link><generator>RSS for Node</generator><lastBuildDate>Thu, 29 Nov 2018 13:22:13 GMT</lastBuildDate><atom:link href="https://sfoubert.github.io/rss/" rel="self" type="application/rss+xml"/><ttl>60</ttl><item><title><![CDATA[Déclarer une ExceptionHandler dans SpringBoot]]></title><description><![CDATA[<div class="paragraph">
+<?xml version="1.0" encoding="UTF-8"?><rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom" version="2.0"><channel><title><![CDATA[Blog]]></title><description><![CDATA[Blog]]></description><link>https://sfoubert.github.io</link><generator>RSS for Node</generator><lastBuildDate>Thu, 29 Nov 2018 13:22:41 GMT</lastBuildDate><atom:link href="https://sfoubert.github.io/rss/" rel="self" type="application/rss+xml"/><ttl>60</ttl><item><title><![CDATA[Déclarer une ExceptionHandler dans SpringBoot]]></title><description><![CDATA[<div class="paragraph">
 <p>Voici comment déclarer des ExceptionHandlers pour transformer ses exceptions en réponse HTTP</p>
 </div>
 <div class="listingblock">
@@ -28,11 +28,13 @@ public class PurchaseOrderExceptionHandler {
 }</code></pre>
 </div>
 </div>]]></description><link>https://sfoubert.github.io/2018/11/29/Declarer-une-Exception-Handler-dans-Spring-Boot.html</link><guid isPermaLink="true">https://sfoubert.github.io/2018/11/29/Declarer-une-Exception-Handler-dans-Spring-Boot.html</guid><category><![CDATA[SpringBoot]]></category><category><![CDATA[Java]]></category><dc:creator><![CDATA[Sébastien F]]></dc:creator><pubDate>Thu, 29 Nov 2018 00:00:00 GMT</pubDate></item><item><title><![CDATA[Log enter and exit methods with Spring AOP]]></title><description><![CDATA[<div class="paragraph">
-<p>Creation d&#8217;une annotation @IpponLogging</p>
+<p>Creation d&#8217;une annotation @IpponLogging
+:hp-tags: SpringBoot, Java
+:source-highlighter: highlightjs</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">package fr.ippon.starter.aop.autoconfigure;
+<pre class="highlight"><code class="language-java" data-lang="java">package fr.ippon.starter.aop.autoconfigure;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
